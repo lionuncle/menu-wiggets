@@ -26,12 +26,12 @@ public class contactsAdapter extends BaseAdapter {
 
     @Override
     public Object getItem(int position) {
-        return null;
+        return position;
     }
 
     @Override
     public long getItemId(int position) {
-        return 0;
+        return position;
     }
 
     @Override
@@ -40,7 +40,6 @@ public class contactsAdapter extends BaseAdapter {
 
         TextView name = v.findViewById(R.id.name);
         TextView number = v.findViewById(R.id.number);
-
         name.setText(nameList.get(position));
         number.setText(numberList.get(position));
         return v;
