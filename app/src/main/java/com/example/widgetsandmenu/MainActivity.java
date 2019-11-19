@@ -2,6 +2,7 @@ package com.example.widgetsandmenu;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -46,8 +47,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, final int position, final long id) {
                     int pos = parent.getPositionForView(view);
-                    Toast.makeText(getApplicationContext(),pos+"",Toast.LENGTH_SHORT).show();
-
                     PopupMenu popup = new PopupMenu(MainActivity.this, view);
                     popup.getMenuInflater().inflate(R.menu.popup_menu, popup.getMenu());
                     menu = popup;
@@ -81,7 +80,19 @@ public class MainActivity extends AppCompatActivity {
 
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            Toast.makeText(MainActivity.this, "Message", Toast.LENGTH_SHORT).show();
+                            try {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    if (checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                                        requestSMSPermission();
+                                    } else{
+                                        Intent i= new Intent(getBaseContext(),smsActivity.class);
+                                        i.putExtra("to",readContacts.getNumbersList().get(position));
+                                        startActivity(i);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Toast.makeText(MainActivity.this, "ERROE"+e.toString(), Toast.LENGTH_SHORT).show();
+                            }
                             return true;
                         }
                     });
@@ -89,7 +100,9 @@ public class MainActivity extends AppCompatActivity {
 
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            Toast.makeText(MainActivity.this, "EMAIL", Toast.LENGTH_SHORT).show();
+                            Intent i = new Intent(MainActivity.this,emailActivity.class);
+                            startActivityForResult(i,1122);
+                            Toast.makeText(MainActivity.this, "E-mail address not available", Toast.LENGTH_SHORT).show();
                             return true;
                         }
                     });
@@ -101,6 +114,34 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }//onCreate
+    @Override
+    //email activity result, sending it implicitly
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        try {
+            if (requestCode == 1122) {
+                if(resultCode == Activity.RESULT_OK){
+                    String to=data.getStringExtra("to");
+                    String subject=data.getStringExtra("subject");
+                    String body=data.getStringExtra("body");
+                    Intent intent = new Intent(Intent.ACTION_SENDTO);
+                    intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+                    intent.putExtra(Intent.EXTRA_TEXT, body);
+                    intent.setData(Uri.parse("mailto:"+to));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+
+                }
+                if (resultCode == Activity.RESULT_CANCELED) {
+                    Toast.makeText(this, "Empty input", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        } catch (Exception e) {
+            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+        }
+
+
+    }//onActivityResult
 
     public void requestContactPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
